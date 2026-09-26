@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "config": {
+    "seed": 10058,
+    "operations": 100,
+    "faultRate": 0.05,
+    "maxVirtualTime": 100000
+  },
+  "invariant": "VERSION_REGRESSION",
+  "traceHash": "1b82cf9971d5760984f101a41c62adc6dc90b3676410ca2be02971327e7e67d3"
+}

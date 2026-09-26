@@ -74,6 +74,12 @@ A 500-seed run later found a second protocol bug at seed `9064`. An AppendEntrie
 bun run replay --seed 9064 --quiet
 ```
 
+Another fuzz batch found a lifecycle bug at seed `10058`: an outstanding write from a crashed node could finish after restart and overwrite the new incarnation's durable state. Storage events now carry their node generation, and the simulator cancels completions for crashed or superseded generations. Replaying the historical `VERSION_REGRESSION` configuration now passes:
+
+```bash
+bun run replay --seed 10058 --quiet
+```
+
 ## Run FaultSeed
 
 Install the development dependencies and typecheck:

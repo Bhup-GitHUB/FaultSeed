@@ -7,6 +7,7 @@ export type StorageOutcome = "success" | "failure" | "drop" | "corrupt"
 export type StorageOperation = {
   id: string
   node: string
+  generation: number
   kind: "read" | "write"
   key: string
   value: string | null
@@ -59,12 +60,21 @@ export class SimStorage {
     this.validateConfig()
   }
 
-  read(node: string, key: string, id: string): void {
-    this.request({ id, node, kind: "read", key, value: null })
+  read(node: string, key: string, id: string, generation: number): void {
+    this.request({ id, node, generation, kind: "read", key, value: null })
   }
 
-  write(node: string, key: string, value: string, id: string): void {
-    this.request({ id, node, kind: "write", key, value })
+  write(node: string, key: string, value: string, id: string, generation: number): void {
+    this.request({ id, node, generation, kind: "write", key, value })
+  }
+
+  cancel(operation: StorageOperation): void {
+    this.trace.record(this.now(), operation.node, "STORAGE_CANCEL", {
+      generation: operation.generation,
+      id: operation.id,
+      key: operation.key,
+      kind: operation.kind
+    })
   }
 
   complete(operation: StorageOperation): StorageResult {
@@ -111,6 +121,9 @@ export class SimStorage {
   }
 
   private request(request: Omit<StorageOperation, "outcome">): void {
+    if (!Number.isSafeInteger(request.generation) || request.generation < 1) {
+      throw new RangeError("Storage generation must be positive")
+    }
     const outcome = request.kind === "write" ? this.writeOutcome() : "success"
     const delay = this.latency()
     const operation = { ...request, outcome }

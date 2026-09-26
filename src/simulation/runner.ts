@@ -209,9 +209,9 @@ export class Simulation {
       if (effect.type === "send") {
         this.network.send(id, effect.to, effect.message)
       } else if (effect.type === "read") {
-        this.storage.read(id, effect.key, effect.id)
+        this.storage.read(id, effect.key, effect.id, this.generations.get(id)!)
       } else if (effect.type === "write") {
-        this.storage.write(id, effect.key, effect.value, effect.id)
+        this.storage.write(id, effect.key, effect.value, effect.id, this.generations.get(id)!)
       } else if (effect.type === "schedule") {
         this.scheduler.schedule(effect.delay, "timer", {
           node: id,
@@ -253,9 +253,13 @@ export class Simulation {
   }
 
   private completeStorage(operation: StorageOperation): void {
+    const id = operation.node as NodeId
+    const node = this.nodes.get(id)
+    if (!node || this.generations.get(id) !== operation.generation) {
+      this.storage.cancel(operation)
+      return
+    }
     const result = this.storage.complete(operation)
-    const node = this.nodes.get(operation.node as NodeId)
-    if (!node) return
     try {
       this.applyEffects(operation.node as NodeId, node.handle({
         type: "storage",
