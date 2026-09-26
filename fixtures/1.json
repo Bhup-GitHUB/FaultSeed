@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "config": {
+    "seed": 1,
+    "operations": 80,
+    "faultRate": 0.35,
+    "maxVirtualTime": 2000
+  },
+  "invariant": "ACKNOWLEDGED_WRITE_LOST",
+  "traceHash": "d79a5807920f8ef73bae3bddb43e88597c2a6a37acb53a961731ef3c5dae1308"
+}

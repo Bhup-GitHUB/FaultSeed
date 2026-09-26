@@ -28,14 +28,23 @@ export async function saveFailure(config: SimulationConfig, violation: Invariant
 }
 
 export async function loadFailure(seed: number): Promise<ReplayRecord | null> {
-  try {
-    const value: unknown = JSON.parse(await readFile(replayPath(seed), "utf8"))
-    if (!isReplayRecord(value) || value.config.seed !== seed) throw new TypeError("Invalid replay metadata")
-    return value
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") return null
-    throw error
+  const paths = [
+    replayPath(seed),
+    join(process.cwd(), "fixtures", `${seed}.json`)
+  ]
+
+  for (const path of paths) {
+    try {
+      const value: unknown = JSON.parse(await readFile(path, "utf8"))
+      if (!isReplayRecord(value) || value.config.seed !== seed) throw new TypeError("Invalid replay metadata")
+      return value
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") continue
+      throw error
+    }
   }
+
+  return null
 }
 
 function isReplayRecord(value: unknown): value is ReplayRecord {
