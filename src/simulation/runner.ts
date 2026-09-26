@@ -99,7 +99,7 @@ export class Simulation {
         maxLatency: 3,
         failureProbability: faultScale * 0.05,
         droppedWriteProbability: faultScale * 0.02,
-        corruptionProbability: 0,
+        corruptionProbability: faultScale * 0.005,
         extraDelayProbability: faultScale * 0.15,
         maxExtraDelay: 18,
         ...config.storage
@@ -255,12 +255,23 @@ export class Simulation {
     const result = this.storage.complete(operation)
     const node = this.nodes.get(operation.node as NodeId)
     if (!node) return
-    this.applyEffects(operation.node as NodeId, node.handle({
-      type: "storage",
-      id: result.id,
-      value: result.value,
-      error: result.error
-    }))
+    try {
+      this.applyEffects(operation.node as NodeId, node.handle({
+        type: "storage",
+        id: result.id,
+        value: result.value,
+        error: result.error
+      }))
+    } catch (error) {
+      if (operation.kind === "read" && (error instanceof SyntaxError || error instanceof TypeError)) {
+        throw new InvariantViolation("STORAGE_CORRUPTION", this.config.seed, this.scheduler.now, this.eventNumber, {
+          node: operation.node as NodeId,
+          key: operation.key,
+          actual: result.value
+        })
+      }
+      throw error
+    }
   }
 
   private deliverTimer(timer: TimerEvent): void {
@@ -319,6 +330,10 @@ export class Simulation {
     }
     if (fault.type === "partition") {
       this.network.partition(fault.groups)
+      return
+    }
+    if (fault.type === "storage_corruption") {
+      this.storage.corrupt(fault.node, "state")
       return
     }
     this.network.heal()

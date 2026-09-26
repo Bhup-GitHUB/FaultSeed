@@ -6,6 +6,7 @@ export type InvariantType =
   | "CONFLICTING_COMMIT"
   | "READ_CORRECTNESS"
   | "REPLICA_DIVERGENCE"
+  | "STORAGE_CORRUPTION"
 
 export type InvariantDetails = {
   key?: string

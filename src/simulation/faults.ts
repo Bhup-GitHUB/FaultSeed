@@ -6,6 +6,7 @@ export type FaultEvent =
   | { time: number; order: number; type: "node_crash"; node: NodeId }
   | { time: number; order: number; type: "node_restart"; node: NodeId }
   | { time: number; order: number; type: "partition"; groups: NodeId[][] }
+  | { time: number; order: number; type: "storage_corruption"; node: NodeId }
   | { time: number; order: number; type: "heal" }
 
 const nodes: readonly NodeId[] = ["node-a", "node-b", "node-c"]
@@ -23,7 +24,10 @@ export function generateFaults(random: Random, workload: readonly WorkloadItem[]
     const time = Math.min(item.time + random.int(0, 3), maxTime)
     const duration = random.int(8, 24)
 
-    if (random.bool(0.5)) {
+    if (random.bool(0.02)) {
+      faults.push({ time, order, type: "storage_corruption", node: random.pick(nodes) })
+      order += 1
+    } else if (random.bool(0.5)) {
       const node = random.pick(nodes)
       faults.push({ time, order, type: "node_crash", node })
       order += 1
