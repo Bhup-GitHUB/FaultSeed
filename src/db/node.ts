@@ -57,7 +57,7 @@ export class DatabaseNode {
   private heartbeatToken = 0
   private started = false
 
-  constructor(readonly id: NodeId, private readonly config: NodeConfig) {
+  constructor(readonly id: NodeId, private readonly config: NodeConfig, private readonly incarnation = 0) {
     if (!Number.isSafeInteger(config.electionTimeout) || config.electionTimeout < 1) {
       throw new RangeError("Election timeout must be positive")
     }
@@ -533,7 +533,7 @@ export class DatabaseNode {
   }
 
   private nextStorageId(): string {
-    const id = `${this.id}:storage:${this.storageSequence}`
+    const id = `${this.id}:${this.incarnation}:storage:${this.storageSequence}`
     this.storageSequence += 1
     return id
   }
