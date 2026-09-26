@@ -68,6 +68,12 @@ PASS seed=1 traceHash=...
 
 The fixture's old trace hash records the pre-fix trace. Trace hashes are expected to change when simulator behavior changes; determinism is guaranteed for the same simulator version and configuration.
 
+A 500-seed run later found a second protocol bug at seed `9064`. An AppendEntries message containing an identical prefix truncated a follower's longer suffix. That could discard a quorum-replicated entry and later allow a conflicting entry to commit at the same log index. Log merging now preserves the existing suffix when the incoming entries match it. The historical fixture keeps the original `CONFLICTING_COMMIT` classification; replaying the same configuration now passes:
+
+```bash
+bun run replay --seed 9064 --quiet
+```
+
 ## Run FaultSeed
 
 Install the development dependencies and typecheck:

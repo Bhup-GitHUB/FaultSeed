@@ -458,7 +458,7 @@ export class DatabaseNode {
     const shared = Math.min(incoming.length, this.state.log.length)
     let common = 0
     while (common < shared && this.sameEntry(incoming[common], this.state.log[common])) common += 1
-    if (common === incoming.length) return incoming
+    if (common === incoming.length) return this.state.log
     return [...this.state.log.slice(0, common), ...incoming.slice(common)]
   }
 

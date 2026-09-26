@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "config": {
+    "seed": 9064,
+    "operations": 100,
+    "faultRate": 0.05,
+    "maxVirtualTime": 100000
+  },
+  "invariant": "CONFLICTING_COMMIT",
+  "traceHash": "07dc7d8380407f6d066f83c69ee16a1de8e49b5b5f43fdf75ffc73c1f971363b"
+}
