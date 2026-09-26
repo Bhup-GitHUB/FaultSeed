@@ -52,7 +52,7 @@ describe("simulated storage", () => {
     const dropped = createStorage({ droppedWriteProbability: 1 })
     dropped.storage.write("a", "key", "value", "w1")
     flush(dropped)
-    expect(dropped.results[0].error).toBeNull()
+    expect(dropped.results[0].error).toBe("write dropped")
     expect(dropped.storage.durableRead("a", "key")).toBeNull()
 
     const corrupted = createStorage({ corruptionProbability: 1 })

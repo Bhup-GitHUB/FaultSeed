@@ -83,7 +83,7 @@ export class SimStorage {
 
     if (operation.outcome === "drop") {
       this.trace.record(this.now(), operation.node, "STORAGE_WRITE_DROP", { id: operation.id, key: operation.key })
-      return { id: operation.id, node: operation.node, kind: operation.kind, key: operation.key, value: null, error: null }
+      return { id: operation.id, node: operation.node, kind: operation.kind, key: operation.key, value: null, error: "write dropped" }
     }
 
     const value = operation.outcome === "corrupt" ? `${operation.value}#corrupt` : operation.value!
