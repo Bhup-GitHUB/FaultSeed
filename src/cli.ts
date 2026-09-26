@@ -2,6 +2,7 @@ import { runFuzz } from "./simulation/fuzz"
 import { Simulation, type SimulationConfig, type SimulationResult } from "./simulation/runner"
 import { loadFailure, saveFailure } from "./replay/store"
 import { RealNodeRuntime } from "./runtime/real"
+import { shrinkFailure } from "./simulation/shrink"
 
 export type CliArgs = {
   command: string | null
@@ -140,9 +141,22 @@ async function runSimulation(args: CliArgs, command: "sim" | "trace"): Promise<v
 async function replay(args: CliArgs): Promise<void> {
   const seed = seedFrom(args, true)
   const saved = await loadFailure(seed)
-  const config = simulationConfig(args.options, seed, saved?.config)
+  let config = simulationConfig(args.options, seed, saved?.config)
   if (saved) console.log(`historical failure: ${saved.invariant}`)
-  const result = new Simulation(config).run()
+  let result: SimulationResult
+  if (args.options.has("shrink")) {
+    const initial = new Simulation(config).run()
+    result = initial
+    if (initial.violation) {
+      const shrunk = shrinkFailure(config, initial.violation.type)
+      config = shrunk.config
+      result = shrunk.result
+      console.log(`operations: ${initial.operations} -> ${result.operations} (${shrunk.trials} runs)`)
+      if (result.violation) await saveFailure(config, result.violation, result.traceHash)
+    }
+  } else {
+    result = new Simulation(config).run()
+  }
   const mode = args.options.has("trace") ? "trace" : args.options.has("quiet") ? "quiet" : "normal"
   await reportResult(config, result, mode)
 }
