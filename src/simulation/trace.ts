@@ -14,11 +14,14 @@ export type TraceEvent = {
 export class TraceLog {
   private events: TraceEvent[] = []
 
+  constructor(private readonly enabled = true) {}
+
   get entries(): readonly TraceEvent[] {
     return this.events
   }
 
-  record(time: number, actor: string, action: string, data: TraceData = {}, target: string | null = null): TraceEvent {
+  record(time: number, actor: string, action: string, data: TraceData = {}, target: string | null = null): void {
+    if (!this.enabled) return
     if (!Number.isFinite(time) || time < 0) throw new RangeError("Trace time must be nonnegative")
     const event: TraceEvent = {
       sequence: this.events.length + 1,
@@ -29,10 +32,10 @@ export class TraceLog {
       data: Object.fromEntries(Object.entries(data).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0))
     }
     this.events.push(event)
-    return event
   }
 
   hash(): string {
+    if (!this.enabled) return ""
     const serialized = JSON.stringify(this.events.map(event => ({
       sequence: event.sequence,
       time: event.time,

@@ -50,7 +50,7 @@ type InputEvent = {
 const nodeIds: readonly NodeId[] = ["node-a", "node-b", "node-c"]
 
 export class Simulation {
-  readonly trace = new TraceLog()
+  readonly trace: TraceLog
   private readonly scheduler = new EventScheduler<unknown>()
   private readonly nodes = new Map<NodeId, DatabaseNode>()
   private readonly generations = new Map<NodeId, number>()
@@ -64,7 +64,8 @@ export class Simulation {
   private failures = 0
   private violation: InvariantViolation | null = null
 
-  constructor(readonly config: SimulationConfig) {
+  constructor(readonly config: SimulationConfig, recordTrace = true) {
+    this.trace = new TraceLog(recordTrace)
     this.validateConfig()
     const streams = randomStreams(config.seed)
     this.monitor = new InvariantMonitor(config.seed)

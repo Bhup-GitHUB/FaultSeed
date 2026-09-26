@@ -43,15 +43,16 @@ export function runFuzz(config: FuzzConfig): FuzzResult {
       ...(config.network ? { network: config.network } : {}),
       ...(config.storage ? { storage: config.storage } : {})
     }
-    const result = new Simulation(simulationConfig).run()
+    const result = new Simulation(simulationConfig, false).run()
     operations += result.operations
     virtualTime += result.virtualTime
 
     if (result.violation) {
+      const traced = new Simulation(simulationConfig).run()
       failures.push({
         seed,
         invariant: result.violation.type,
-        traceHash: result.traceHash,
+        traceHash: traced.traceHash,
         virtualTime: result.virtualTime
       })
     } else {
