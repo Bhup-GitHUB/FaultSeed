@@ -56,6 +56,7 @@ export class DatabaseNode {
   private electionToken = 0
   private heartbeatToken = 0
   private started = false
+  private restored = false
 
   constructor(readonly id: NodeId, private readonly config: NodeConfig, private readonly incarnation = 0) {
     if (!Number.isSafeInteger(config.electionTimeout) || config.electionTimeout < 1) {
@@ -71,6 +72,10 @@ export class DatabaseNode {
 
   get currentRole(): NodeRole {
     return this.role
+  }
+
+  get isReady(): boolean {
+    return this.restored
   }
 
   get currentTerm(): number {
@@ -133,6 +138,7 @@ export class DatabaseNode {
     if (pending.action.kind === "restore") {
       if (input.error) throw new Error(`Could not restore ${this.id}: ${input.error}`)
       this.installState(decodeState(input.value))
+      this.restored = true
       effects.push(this.effectTrace("RESTORE", { term: this.state.term, index: this.state.commitIndex }))
       effects.push(...this.resetElectionTimer())
     } else if (input.error) {

@@ -333,6 +333,7 @@ export class Simulation {
 
   private observeNodes(): void {
     for (const [id, node] of this.nodes) {
+      if (!node.isReady) continue
       const snapshot = this.snapshot(id)
       if (snapshot) this.monitor.observe(snapshot, this.scheduler.now, this.eventNumber)
       if (node.currentRole === "leader") this.monitor.checkLeader(snapshot!, this.scheduler.now, this.eventNumber)
@@ -341,7 +342,7 @@ export class Simulation {
 
   private snapshot(id: NodeId): NodeSnapshot | undefined {
     const node = this.nodes.get(id)
-    if (!node) return undefined
+    if (!node || !node.isReady) return undefined
     return {
       id,
       generation: this.generations.get(id)!,
