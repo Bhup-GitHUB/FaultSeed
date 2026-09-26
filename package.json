@@ -1,0 +1,14 @@
+{
+  "name": "faultseed",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/cli.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.10",
+    "typescript": "^5.8.3"
+  }
+}
