@@ -1,6 +1,7 @@
 import { runFuzz } from "./simulation/fuzz"
 import { Simulation, type SimulationConfig, type SimulationResult } from "./simulation/runner"
 import { loadFailure, saveFailure } from "./replay/store"
+import { RealNodeRuntime } from "./runtime/real"
 
 export type CliArgs = {
   command: string | null
@@ -49,6 +50,7 @@ export function help(): string {
     "  fuzz --runs <count> [--seed-start <number>] [--ops <count>]",
     "  replay --seed <number>",
     "  trace --seed <number>",
+    "  node --id <node-a|node-b|node-c>",
     "",
     "Use --trace to print the full event trace or --quiet for one-line results."
   ].join("\n")
@@ -173,6 +175,26 @@ async function fuzz(args: CliArgs): Promise<void> {
   }
 }
 
+function startRealNode(args: CliArgs): void {
+  const id = value(args.options, "id")
+  if (id !== "node-a" && id !== "node-b" && id !== "node-c") {
+    throw new Error("Provide --id node-a, node-b, or node-c")
+  }
+  const ids = ["node-a", "node-b", "node-c"] as const
+  const basePort = 8081
+  const peers = Object.fromEntries(ids.map((node, index) => [
+    node,
+    `http://127.0.0.1:${basePort + index}`
+  ])) as Record<(typeof ids)[number], string>
+  const dataDirectory = value(args.options, "data", ".faultseed/real")!
+  new RealNodeRuntime({
+    id,
+    port: basePort + ids.indexOf(id),
+    peers,
+    dataDirectory
+  }).listen()
+}
+
 export async function runCli(argv: string[]): Promise<void> {
   const args = parseCli(argv)
   if (!args.command || args.command === "help" || args.command === "--help") {
@@ -182,6 +204,7 @@ export async function runCli(argv: string[]): Promise<void> {
   if (args.command === "sim" || args.command === "trace") return runSimulation(args, args.command)
   if (args.command === "replay") return replay(args)
   if (args.command === "fuzz") return fuzz(args)
+  if (args.command === "node") return startRealNode(args)
   throw new Error(`Unknown command: ${args.command}`)
 }
 
