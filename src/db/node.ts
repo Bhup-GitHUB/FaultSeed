@@ -93,6 +93,10 @@ export class DatabaseNode {
     return this.state.log.slice(0, this.state.commitIndex)
   }
 
+  get logEntries(): readonly LogEntry[] {
+    return this.state.log
+  }
+
   handle(input: NodeInput): NodeEffect[] {
     if (input.type === "storage") return this.completeStorage(input)
     if (this.activeStorage) {
