@@ -18,6 +18,7 @@ export function generateFaults(random: Random, workload: readonly WorkloadItem[]
   let order = 0
 
   for (const item of workload) {
+    if (item.time > maxTime) continue
     if (!random.bool(rate)) continue
     const time = Math.min(item.time + random.int(0, 3), maxTime)
     const duration = random.int(8, 24)

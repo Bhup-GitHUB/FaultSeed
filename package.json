@@ -4,7 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/cli.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sim": "bun src/cli.ts sim",
+    "fuzz": "bun src/cli.ts fuzz",
+    "replay": "bun src/cli.ts replay",
+    "trace": "bun src/cli.ts trace"
   },
   "devDependencies": {
     "@types/bun": "^1.2.10",
