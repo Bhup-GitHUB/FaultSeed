@@ -14,7 +14,6 @@ export type SimulationConfig = {
   operations: number
   faultRate: number
   maxVirtualTime: number
-  acknowledgement: "local" | "quorum"
   network?: Partial<NetworkConfig>
   storage?: Partial<StorageConfig>
 }
@@ -167,7 +166,7 @@ export class Simulation {
 
   private nodeConfig(id: NodeId): NodeConfig {
     const electionTimeout = id === "node-a" ? 24 : id === "node-b" ? 36 : 48
-    return { electionTimeout, heartbeatInterval: 6, acknowledgement: this.config.acknowledgement }
+    return { electionTimeout, heartbeatInterval: 6 }
   }
 
   private scheduleWorkload(): void {

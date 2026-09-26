@@ -14,7 +14,6 @@ import type {
 export type NodeConfig = {
   electionTimeout: number
   heartbeatInterval: number
-  acknowledgement: "local" | "quorum"
 }
 
 type PendingAction =
@@ -190,14 +189,8 @@ export class DatabaseNode {
 
     if (action.kind === "client_append") {
       this.matchIndex.set(this.id, this.state.log.length)
-      const effects: NodeEffect[] = []
-      if (this.config.acknowledgement === "local") {
-        effects.push({ type: "client", result: { id: action.request.id, status: "ok", version: action.entry.index } })
-        effects.push(this.effectTrace("CLIENT_ACK_LOCAL", { index: action.entry.index }))
-      } else {
-        this.pendingWrites.set(action.entry.index, action.request)
-      }
-      effects.push(...this.broadcast())
+      this.pendingWrites.set(action.entry.index, action.request)
+      const effects = this.broadcast()
       effects.push(...this.maybeCommit())
       return effects
     }
