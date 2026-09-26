@@ -59,8 +59,10 @@ export type NodeSnapshot = {
 export class InvariantMonitor {
   private requests = new Map<string, ClientRequest>()
   private acknowledged = new Map<string, AckedWrite>()
-  private snapshots = new Map<NodeId, NodeSnapshot>()
   private highestVersion = new Map<NodeId, number>()
+  private checkedCommit = new Map<string, number>()
+  private committedEntries = new Map<number, LogEntry>()
+  private checkedLeader = new Map<string, string>()
 
   constructor(private readonly seed: number) {}
 
@@ -92,26 +94,30 @@ export class InvariantMonitor {
       })
     }
     this.highestVersion.set(snapshot.id, snapshot.commitIndex)
-    this.snapshots.set(snapshot.id, snapshot)
-
-    for (const other of this.snapshots.values()) {
-      const through = Math.min(snapshot.commitIndex, other.commitIndex)
-      for (let index = 0; index < through; index += 1) {
-        const left = snapshot.log[index]
-        const right = other.log[index]
-        if (left && right && !sameEntry(left, right)) {
-          throw new InvariantViolation("CONFLICTING_COMMIT", this.seed, time, event, {
-            node: snapshot.id,
-            version: index + 1,
-            expected: JSON.stringify(right.operation),
-            actual: JSON.stringify(left.operation)
-          })
-        }
+    const generation = `${snapshot.id}:${snapshot.generation}`
+    const checked = this.checkedCommit.get(generation) ?? 0
+    for (let index = checked; index < snapshot.commitIndex; index += 1) {
+      const entry = snapshot.log[index]
+      if (!entry) continue
+      const committed = this.committedEntries.get(index + 1)
+      if (committed && !sameEntry(entry, committed)) {
+        throw new InvariantViolation("CONFLICTING_COMMIT", this.seed, time, event, {
+          node: snapshot.id,
+          version: index + 1,
+          expected: JSON.stringify(committed.operation),
+          actual: JSON.stringify(entry.operation)
+        })
       }
+      if (!committed) this.committedEntries.set(index + 1, entry)
     }
+    this.checkedCommit.set(generation, Math.max(checked, snapshot.commitIndex))
   }
 
   checkLeader(snapshot: NodeSnapshot, time: number, event: number): void {
+    const generation = `${snapshot.id}:${snapshot.generation}`
+    const state = `${snapshot.commitIndex}:${this.acknowledged.size}`
+    if (this.checkedLeader.get(generation) === state) return
+
     for (const write of this.acknowledged.values()) {
       const entry = snapshot.log[write.index - 1]
       if (!entry || !sameOperation(entry.operation, write.operation)) {
@@ -125,6 +131,7 @@ export class InvariantMonitor {
         })
       }
     }
+    this.checkedLeader.set(generation, state)
   }
 
   checkRead(result: ClientResult, snapshot: NodeSnapshot, time: number, event: number): void {
